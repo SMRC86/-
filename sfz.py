@@ -1,38 +1,38 @@
-进口日期时间
-从收集进口有序直接
+import datetime
+from collections import OrderedDict
 
 # 加载行政区划代码库
-极好的 加载_区域_数据(文件路径=region_codes.txt '):
+def load_region_data(file_path='region_codes.txt'):
     """
-从指定路径的文本文件（textfile）文件加载行政区划数据
-:param文件路径:行政区划数据文件路径,默认为region_codes.txt '
-:返回:包含行政区划代码和对应名称的字典
+    从指定路径的 txt 文件加载行政区划数据
+    :param file_path: 行政区划数据文件路径，默认为 'region_codes.txt'
+    :return: 包含行政区划代码和对应名称的字典
     """
-区域代码={}
-    尝试:
-        随着 打开(文件路径，r '，编码=' utf-8 ') 如同文件:
-            为线条在文件:
-零件=生产线。剥夺().使分离()
-                如果 低输入联网（low-entry networking的缩写）(部件) == 2:
-区域代码[部件[0]]=零件[1]
-    除...之外文件未找到错误:
-        打印(f "错误：找不到行政区划数据文件{文件路径}")
-    返回区域代码
+    region_codes = {}
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                parts = line.strip().split()
+                if len(parts) == 2:
+                    region_codes[parts[0]] = parts[1]
+    except FileNotFoundError:
+        print(f"错误：找不到行政区划数据文件 {file_path}")
+    return region_codes
 
 # 获取地区详细信息
-极好的 获取_区域_详细信息(代码，区域代码):
+def get_region_detail(code, region_codes):
     """
     根据行政区划代码递归解析行政区划
-:参数代码:行政区划代码
-:参数区域代码:行政区划代码库字典
-:返回:包含省、市、区信息的列表
+    :param code: 行政区划代码
+    :param region_codes: 行政区划代码库字典
+    :return: 包含省、市、区信息的列表
     """
-详细信息=[]
+    details = []
     # 省级 (前 2 位补 4 个 0)
-省份代码=代码[:2] + "0000"
-省=地区代码。得到(省份代码)
-    如果省份:
-细节。附加(省)
+    province_code = code[:2] + "0000"
+    province = region_codes.get(province_code)
+    if province:
+        details.append(province)
     else:
         return ["未知省份"]
 
@@ -186,15 +186,15 @@ def parse_id_info(id_number, region_codes):
     info["地址"] = " ".join(region_details)
 
     # 解析出生日期
-尝试:
-birth _ date = datetime . datetime . strptime(id _ num[6:14]，" %Y%m%d ")。日期()
-信息["年龄"] =当前日期.年份-出生日期.年份-(
-(当前日期.月，当前日期.日)<(出生日期.月，出生日期.日)
+    try:
+        birth_date = datetime.datetime.strptime(id_num[6:14], "%Y%m%d").date()
+        info["年龄"] = current_date.year - birth_date.year - (
+                (current_date.month, current_date.day) < (birth_date.month, birth_date.day)
         )
-信息["出生日期"]= birth _ date . strftime(" % Y-% m-% d ")
-信息["星座"] = get_zodiac_sign(出生日期)
-信息["生肖"] = get_chinese_zodiac(出生日期.年份)
-信息["出生季节"] =出生季节(出生日期)
+        info["出生日期"] = birth_date.strftime("%Y-%m-%d")
+        info["星座"] = get_zodiac_sign(birth_date)
+        info["生肖"] = get_chinese_zodiac(birth_date.year)
+        info["出生季节"] = get_birth_season(birth_date)
     except ValueError:
         info["错误信息"] = "错误：无效的出生日期"
         return info
@@ -214,9 +214,9 @@ def main():
     print("   - 出生日期：从身份证号码中提取并格式化展示出生日期。")
     print("   - 年龄计算：依据当前日期和出生日期，精确计算周岁年龄。")
     print("   - 性别判断：通过身份证第 17 位数字判断性别。")
-    打印("   - 校验码验证：计算并验证身份证第 18 位校验码的正确性。")
+    print("   - 校验码验证：计算并验证身份证第 18 位校验码的正确性。")
     print("2. 特殊格式处理：")
-    打印("   - 15 位身份证升级：将 15 位身份证号码升级为 18 位。")
+    print("   - 15 位身份证升级：将 15 位身份证号码升级为 18 位。")
     print("   - 17 位号码计算：为 17 位身份证号码计算第 18 位校验码。")
     print("3. 隐藏信息挖掘：")
     print("   - 星座信息：根据出生日期确定对应的星座。")
@@ -227,25 +227,25 @@ def main():
     print("   - 错误提示：遇到问题时，给出详细的错误信息。")
     print("=" * 80)
 
-    region_codes = 加载_区域_数据()
-    打印("身份证信息解析系统（含行政区划）")
+    region_codes = load_region_data()
+    print("身份证信息解析系统（含行政区划）")
     print("=" * 40)
-    在…期间 真实的:
-        id_input = 投入(“n请输入身份证号码（输入q退出): ").strip()
+    while True:
+        id_input = input("\n请输入身份证号码（输入 q 退出）: ").strip()
         if id_input.lower() == 'q':
             break
 
-        result = 解析标识信息(id_input, region_codes)
+        result = parse_id_info(id_input, region_codes)
 
-        如果 result["有效性"]:
-            打印(“n[有效身份证信息]")
-            为 key, value 在 result.项目():
-                如果 key != "有效性":
-                    打印(f "{key}：{value}")
-        其他:
-            打印(“n[无效身份证]")
-            打印(f "错误原因：{result['错误信息']}")
-        打印("=" * 40)
+        if result["有效性"]:
+            print("\n[有效身份证信息]")
+            for key, value in result.items():
+                if key != "有效性":
+                    print(f"• {key}：{value}")
+        else:
+            print("\n[无效身份证]")
+            print(f"• 错误原因：{result['错误信息']}")
+        print("=" * 40)
 
-如果 __name__ == " __main__ ":
-    mainmain()
+if __name__ == "__main__":
+    main()
